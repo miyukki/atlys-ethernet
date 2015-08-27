@@ -69,7 +69,7 @@ BUFG clkout0_bufg (
 
 // Ethernet
 reg [7:0] cnt = 8'b0;
-assign ETH_RST = RST;
+/*assign ETH_RST = RST;*/
 assign ETH_CLK = CLK_125M;
 
 always @(posedge RST or posedge CLK_125M) begin
@@ -80,15 +80,18 @@ always @(posedge RST or posedge CLK_125M) begin
   else begin
     cnt      <= cnt + 1;
     LED[6:0] <= ETH_RX_DATA[6:0];
-    LED[7]   <= cnt[7];
+    LED[7]   <= ETH_RST;
   end
 end
 
 ether_sample_packet_tx sample_tx (
-  .clk  (CLK_125M),
-  .er   (ETH_TX_ER),
-  .en   (ETH_TX_EN),
-  .data (ETH_TX_DATA)
+  .rst      (RST),
+  .clk_100  (CLK_100M),
+  .clk_125  (CLK_125M),
+  .phy_rst  (ETH_RST),
+  .phy_er   (ETH_TX_ER),
+  .phy_en   (ETH_TX_EN),
+  .phy_data (ETH_TX_DATA)
 );
 
 endmodule

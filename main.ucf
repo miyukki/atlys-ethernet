@@ -6,7 +6,7 @@ PIN "clkout0_bufg.O" CLOCK_DEDICATED_ROUTE = FALSE;
 NET "CLK_100M" LOC = "L15" | IOSTANDARD = LVCMOS33 | PERIOD = 100 MHz;
 
 # ETHERNET
-# NET "ETH_RST"        LOC = "G13";
+NET "ETH_RST"          LOC = "G13";
 NET "ETH_CLK"          LOC = "L12";
 # NET "ETH_MDC_PAD_O"  LOC = "F16";
 # NET "ETH_MD_PAD_IO"  LOC = "N17";
