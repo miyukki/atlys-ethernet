@@ -1,0 +1,49 @@
+# RESET
+NET "RST" LOC = "T15" | IOSTANDARD = LVCMOS33;
+
+# CLOCK
+NET "CLK_100M" LOC = "L15" | IOSTANDARD = LVCMOS33 | PERIOD = 100 MHz;
+
+# ETHERNET
+# NET "ETH_RST"        LOC = "G13";
+# NET "ETH_MDC_PAD_O"  LOC = "F16";
+# NET "ETH_MD_PAD_IO"  LOC = "N17";
+# NET "ETH_COL"        LOC = "C17";
+# NET "ETH_CRS"        LOC = "C18";
+
+# NET "ETH_TX_CLK"     LOC = "K16";
+# NET "ETH_TX_ER"      LOC = "G18";
+# NET "ETH_TX_EN"      LOC = "H15";
+# NET "ETH_TX_DATA<0>" LOC = "H16";
+# NET "ETH_TX_DATA<1>" LOC = "H13";
+# NET "ETH_TX_DATA<2>" LOC = "K14";
+# NET "ETH_TX_DATA<3>" LOC = "K13";
+# NET "ETH_TX_DATA<4>" LOC = "J13";
+# NET "ETH_TX_DATA<5>" LOC = "G14";
+# NET "ETH_TX_DATA<6>" LOC = "H12";
+# NET "ETH_TX_DATA<7>" LOC = "K12";
+
+# NET "ETH_RX_CLK"     LOC = "K15";
+# NET "ETH_RX_ER"      LOC = "F18";
+# NET "ETH_RX_DV"      LOC = "F17";
+NET "ETH_RX_DATA<0>" LOC = "G16";
+NET "ETH_RX_DATA<1>" LOC = "H14";
+NET "ETH_RX_DATA<2>" LOC = "E16";
+NET "ETH_RX_DATA<3>" LOC = "F15";
+NET "ETH_RX_DATA<4>" LOC = "F14";
+NET "ETH_RX_DATA<5>" LOC = "E18";
+NET "ETH_RX_DATA<6>" LOC = "D18";
+NET "ETH_RX_DATA<7>" LOC = "D17";
+
+# SW
+# NET "SW" LOC = "A10" | IOSTANDARD = LVCMOS33;
+
+# LED
+NET "LED<0>" LOC = "U18";
+NET "LED<1>" LOC = "M14";
+NET "LED<2>" LOC = "N14";
+NET "LED<3>" LOC = "L14";
+NET "LED<4>" LOC = "M13";
+NET "LED<5>" LOC = "D4" ;
+NET "LED<6>" LOC = "P16";
+NET "LED<7>" LOC = "N12";
