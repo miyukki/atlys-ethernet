@@ -63,7 +63,7 @@ always @(posedge trig or posedge clk_125) begin
   if (trig) begin
     phy_en      <= 1'b0;
     phy_data    <= 8'b0;
-    crc_en      <= 1'b0;
+    crc_en      <= 1'b1;
     cnt         <= 12'd0;
   end
   else begin
@@ -141,7 +141,7 @@ always @(posedge trig or posedge clk_125) begin
       12'h43: phy_data <= 8'h00;
       12'h44: begin
         phy_data <= crc_out[31:24];
-        crc_en   <= 1'b1;
+        crc_en   <= 1'b0;
       end
       12'h45: phy_data <= crc_out[23:16];
       12'h46: phy_data <= crc_out[15:8];
@@ -149,7 +149,7 @@ always @(posedge trig or posedge clk_125) begin
       12'h48: begin
         phy_en   <= 1'b0;
         phy_data <= 8'h00;
-        crc_en   <= 1'b0;
+        crc_en   <= 1'b1;
       end
       default: phy_data <= 8'h0;
     endcase
