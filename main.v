@@ -11,20 +11,21 @@ module main #(
   input  wire CLK_100M,
 
   // Ethernet
-  /*output wire ETH_RST,
-  output wire ETH_MDC_PAD_O,
+  output wire ETH_RST,
+  output wire ETH_CLK,
+  /*output wire ETH_MDC_PAD_O,
   input  wire ETH_MD_PAD_IO,*/
   // input  wire ETH_COL,
   // input  wire ETH_CRS,
 
-  /*output wire       ETH_TX_CLK,
+  input  wire       ETH_TX_CLK,
   output wire       ETH_TX_ER,
   output wire       ETH_TX_EN,
   output wire [7:0] ETH_TX_DATA,
 
   input  wire       ETH_RX_CLK,
   input  wire       ETH_RX_ER,
-  input  wire       ETH_RX_DV,*/
+  input  wire       ETH_RX_DV,
   input  wire [7:0] ETH_RX_DATA,
 
   // Debug
@@ -33,8 +34,7 @@ module main #(
 );
 
 // Clock generator
-wire CLK_125M, pll_locked, pll_clk_bufin, pll_clk_bufout;
-wire clk_0, clk_unused_1, clk_unused_2, clk_unused_3, clk_unused_4, clk_unused_5;
+wire CLK_125M, pll_clk, pll_locked, pll_clk_bufin, pll_clk_bufout;
 
 PLL_BASE #(
   .BANDWIDTH              ("OPTIMIZED"),
@@ -50,16 +50,9 @@ PLL_BASE #(
   .REF_JITTER             (0.010))
 pll_base_inst (
   .CLKFBOUT              (pll_clk_bufout),
-  .CLKOUT0               (clk_0),
-  .CLKOUT1               (clk_unused_1),
-  .CLKOUT2               (clk_unused_2),
-  .CLKOUT3               (clk_unused_3),
-  .CLKOUT4               (clk_unused_4),
-  .CLKOUT5               (clk_unused_5),
-  // Status and control signals
+  .CLKOUT0               (pll_clk),
   .LOCKED                (pll_locked),
   .RST                   (RST),
-   // Input clock control
   .CLKFBIN               (pll_clk_bufin),
   .CLKIN                 (CLK_100M)
 );
@@ -70,23 +63,32 @@ BUFG clkfbin_bufg (
 );
 
 BUFG clkout0_bufg (
-  .I(clk_0),
+  .I(pll_clk),
   .O(CLK_125M)
 );
 
 // Ethernet
-/*reg [7:0] state;*/
-/*wire LED */
-/*assign LED = state;*/
-/*assign ETH_RST = RST;*/
+reg [7:0] cnt = 8'b0;
+assign ETH_RST = RST;
+assign ETH_CLK = CLK_125M;
 
 always @(posedge RST or posedge CLK_125M) begin
   if (RST) begin
-    LED <= FALSE;
+    cnt <= 8'b0;
+    LED <= 8'b0;
   end
   else begin
-    LED <= ETH_RX_DATA;
+    cnt      <= cnt + 1;
+    LED[6:0] <= ETH_RX_DATA[6:0];
+    LED[7]   <= cnt[7];
   end
 end
+
+ether_sample_packet_tx sample_tx (
+  .clk  (CLK_125M),
+  .er   (ETH_TX_ER),
+  .en   (ETH_TX_EN),
+  .data (ETH_TX_DATA)
+);
 
 endmodule
