@@ -4,11 +4,9 @@ module main #(
   parameter TRUE = 1'b1,
   parameter FALSE = 1'b0
 ) (
-  // Reset
   input  wire RST,
-
-  // Clock
   input  wire CLK_100M,
+  input  wire BTN,
 
   // Ethernet
   output wire ETH_RST,
@@ -69,8 +67,6 @@ BUFG clkout0_bufg (
 
 // Ethernet
 reg [7:0] cnt = 8'b0;
-/*assign ETH_RST = RST;*/
-assign ETH_CLK = CLK_125M;
 
 always @(posedge RST or posedge CLK_125M) begin
   if (RST) begin
@@ -78,16 +74,18 @@ always @(posedge RST or posedge CLK_125M) begin
     LED <= 8'b0;
   end
   else begin
-    cnt      <= cnt + 1;
+    cnt      <= (cnt == 8'b11111111) ? 8'b0 : cnt + 8'b1;
     LED[6:0] <= ETH_RX_DATA[6:0];
-    LED[7]   <= ETH_RST;
+    LED[7]   <= cnt[7];
   end
 end
 
 ether_sample_packet_tx sample_tx (
+  .trig     (BTN),
   .rst      (RST),
   .clk_100  (CLK_100M),
   .clk_125  (CLK_125M),
+  .phy_clk  (ETH_CLK),
   .phy_rst  (ETH_RST),
   .phy_er   (ETH_TX_ER),
   .phy_en   (ETH_TX_EN),

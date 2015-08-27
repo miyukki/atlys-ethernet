@@ -4,9 +4,11 @@ module ether_sample_packet_tx # (
   parameter TRUE  = 1'b1,
   parameter FALSE = 1'b0
 ) (
+  input  wire       trig,
   input  wire       rst,
   input  wire       clk_125,
   input  wire       clk_100,
+  output wire       phy_clk,
   output wire       phy_rst,
   output reg        phy_er,
   output reg        phy_en,
@@ -16,22 +18,53 @@ module ether_sample_packet_tx # (
 initial phy_er   = 1'b0;
 initial phy_en   = 1'b0;
 initial phy_data = 8'b0;
+assign  phy_clk  = clk_125;
+
+/*------------------------------------------*
+ * Timing ans cold start                    *
+ *------------------------------------------*/
 
 reg  [20:0] coldsys_cnt = 21'd0;
 wire        coldsys_rst = (coldsys_cnt == 21'h100000);
 assign      phy_rst     = coldsys_rst;
 
-reg [11:0] cnt = 12'b0;
-
-always @(posedge rst or posedge clk_100 or posedge clk_125) begin
+always @(posedge rst or posedge clk_100) begin
   if (rst) begin
-    phy_en      <= 1'b0;
-    phy_data    <= 8'b0;
-    cnt         <= 12'd0;
     coldsys_cnt <= 21'd0;
   end
-  else if (clk_100) begin
+  else begin
     coldsys_cnt <= coldsys_rst ? 21'h100000 : coldsys_cnt + 21'h1;
+  end
+end
+
+/*------------------------------------------*
+ * CRC Calculate                            *
+ *------------------------------------------*/
+
+reg           crc_en;
+wire   [31:0] crc_out;
+assign        crc_clear = (cnt == 12'h08);
+
+crc crc_calc (
+  .clk(clk_125),
+  .reset(rst),
+  .clear(crc_clear),
+  .data(phy_data),
+  .calc(crc_en),
+  .crc_out(crc_out)
+);
+
+/*------------------------------------------*
+ * Transmit sample packet                   *
+ *------------------------------------------*/
+
+reg [11:0] cnt = 12'b0;
+always @(posedge trig or posedge clk_125) begin
+  if (trig) begin
+    phy_en      <= 1'b0;
+    phy_data    <= 8'b0;
+    crc_en      <= 1'b0;
+    cnt         <= 12'd0;
   end
   else begin
     case (cnt)
@@ -106,13 +139,17 @@ always @(posedge rst or posedge clk_100 or posedge clk_125) begin
       12'h41: phy_data <= 8'h00;
       12'h42: phy_data <= 8'h00;
       12'h43: phy_data <= 8'h00;
-      12'h44: phy_data <= 8'h00;	// Frame Check Sequence = 0x00000000
-      12'h45: phy_data <= 8'h00;
-      12'h46: phy_data <= 8'h00;
-      12'h47: phy_data <= 8'h00;
+      12'h44: begin
+        phy_data <= crc_out[31:24];
+        crc_en   <= 1'b1;
+      end
+      12'h45: phy_data <= crc_out[23:16];
+      12'h46: phy_data <= crc_out[15:8];
+      12'h47: phy_data <= crc_out[7:0];
       12'h48: begin
         phy_en   <= 1'b0;
         phy_data <= 8'h00;
+        crc_en   <= 1'b0;
       end
       default: phy_data <= 8'h0;
     endcase
