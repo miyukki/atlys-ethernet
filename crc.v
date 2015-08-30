@@ -6,8 +6,8 @@ module crc (
   input  wire        clear,
   input  wire [7:0]  data,
   input  wire        calc,
-  output wire [31:0] crc_out,
-  output wire        match
+  output wire [31:0] crc_out
+  /*output wire        match*/
 );
 
 function[31:0] NextCRC;
@@ -52,7 +52,7 @@ function[31:0] NextCRC;
 endfunction
 
 reg [31:0] crc_reg;
-always @ (posedge clk) begin
+always @ (negedge clk) begin
   if (reset | clear)
     crc_reg <= 32'hffffffff;
   else if (calc)
@@ -64,6 +64,6 @@ assign crc_out = ~{ crc_reg[24], crc_reg[25], crc_reg[26], crc_reg[27], crc_reg[
                     crc_reg[8], crc_reg[9], crc_reg[10], crc_reg[11], crc_reg[12], crc_reg[13], crc_reg[14], crc_reg[15],
                     crc_reg[0], crc_reg[1], crc_reg[2], crc_reg[3], crc_reg[4], crc_reg[5], crc_reg[6], crc_reg[7] };
 
-assign match  = (crc_reg == 32'hc704_dd7b);
+/*assign match  = (crc_reg == 32'hc704_dd7b);*/
 
 endmodule

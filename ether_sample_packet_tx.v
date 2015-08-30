@@ -4,8 +4,8 @@ module ether_sample_packet_tx # (
   parameter TRUE  = 1'b1,
   parameter FALSE = 1'b0,
   parameter SRC_MAC_ADDR = { 8'h00, 8'h30, 8'h1b, 8'ha0, 8'ha4, 8'h8e },
-  parameter SRC_IP_ADDR  = { 8'd172, 8'd16, 8'd0, 8'd200 },
   parameter DST_MAC_ADDR = { 8'hff, 8'hff, 8'hff, 8'hff, 8'hff, 8'hff },
+  parameter SRC_IP_ADDR  = { 8'd172, 8'd16, 8'd0, 8'd230 },
   parameter DST_IP_ADDR  = { 8'd172, 8'd16, 8'd0, 8'd1 }
 ) (
   input  wire       trig,
@@ -22,24 +22,6 @@ module ether_sample_packet_tx # (
 initial phy_er   = 1'b0;
 initial phy_en   = 1'b0;
 initial phy_data = 8'b0;
-assign  phy_clk  = clk_125;
-
-/*------------------------------------------*
- * Timing ans cold start                    *
- *------------------------------------------*/
-
-reg  [20:0] coldsys_cnt = 21'd0;
-wire        coldsys_rst = (coldsys_cnt == 21'h100000);
-assign      phy_rst     = coldsys_rst;
-
-always @(posedge rst or posedge clk_100) begin
-  if (rst) begin
-    coldsys_cnt <= 21'd0;
-  end
-  else begin
-    coldsys_cnt <= coldsys_rst ? 21'h100000 : coldsys_cnt + 21'h1;
-  end
-end
 
 /*------------------------------------------*
  * CRC Calculate                            *
@@ -50,12 +32,12 @@ wire   [31:0] crc_out;
 assign        crc_clear = (cnt == 12'h08);
 
 crc crc_calc (
-  .clk(clk_125),
-  .reset(rst),
-  .clear(crc_clear),
-  .data(phy_data),
-  .calc(crc_en),
-  .crc_out(crc_out)
+  .clk     (clk_125),
+  .reset   (rst),
+  .clear   (crc_clear),
+  .data    (phy_data),
+  .calc    (crc_en),
+  .crc_out (crc_out)
 );
 
 /*------------------------------------------*
@@ -65,17 +47,19 @@ crc crc_calc (
 reg [11:0] cnt = 12'b0;
 always @(posedge trig or posedge clk_125) begin
   if (trig) begin
-    phy_en      <= 1'b0;
+    phy_en      <= FALSE;
     phy_data    <= 8'b0;
-    crc_en      <= 1'b0;
+    crc_en      <= FALSE;
     cnt         <= 12'd0;
   end
   else begin
     case (cnt)
       12'h00: begin
-        phy_en   <= 1'b1;
+        phy_en   <= TRUE;
         phy_data <= 8'h55;
+        crc_en   <= TRUE;
       end
+      // Ethernet
       12'h01: phy_data <= 8'h55;  // Preamble
       12'h02: phy_data <= 8'h55;
       12'h03: phy_data <= 8'h55;
@@ -83,11 +67,7 @@ always @(posedge trig or posedge clk_125) begin
       12'h05: phy_data <= 8'h55;
       12'h06: phy_data <= 8'h55;
       12'h07: phy_data <= 8'hd5;  // Preable + Start Frame Delimiter
-      // Ethernet
-      12'h08: begin
-        phy_data <= 8'hff;  // Destination MAC address = FF-FF-FF-FF-FF-FF-FF
-        crc_en   <= 1'b1;
-      end
+      12'h08: phy_data <= 8'hff;  // Destination MAC address = FF-FF-FF-FF-FF-FF-FF
       12'h09: phy_data <= 8'hff;
       12'h0a: phy_data <= 8'hff;
       12'h0b: phy_data <= 8'hff;
@@ -101,7 +81,7 @@ always @(posedge trig or posedge clk_125) begin
       12'h13: phy_data <= SRC_MAC_ADDR[7:0];
       12'h14: phy_data <= 8'h08;  // Protocol Type = ARP (0x0806)
       12'h15: phy_data <= 8'h06;
-      // IP Protocol
+      // ARP
       12'h16: phy_data <= 8'h00;  // Hardware Type = Ethernet (1)
       12'h17: phy_data <= 8'h01;
       12'h18: phy_data <= 8'h08;  // Protocol Type = IP (0x0800)
@@ -150,13 +130,13 @@ always @(posedge trig or posedge clk_125) begin
       12'h43: phy_data <= 8'h00;
       12'h44: begin
         phy_data <= crc_out[31:24];
-        crc_en   <= 1'b0;
+        crc_en   <= FALSE;
       end
       12'h45: phy_data <= crc_out[23:16];
       12'h46: phy_data <= crc_out[15:8];
       12'h47: phy_data <= crc_out[7:0];
       12'h48: begin
-        phy_en   <= 1'b0;
+        phy_en   <= FALSE;
         phy_data <= 8'h00;
       end
       default: phy_data <= 8'h0;

@@ -28,58 +28,25 @@ module main #(
 
   // Debug
   /*input  wire       SW,*/
-  output reg  [7:0] LED
+  output wire [7:0] LED
 );
 
-// Clock generator
-wire CLK_125M, pll_clk, pll_locked, pll_clk_bufin, pll_clk_bufout;
+/*------------------------------------------*
+ * Ethernet                                 *
+ *------------------------------------------*/
 
-PLL_BASE #(
-  .BANDWIDTH              ("OPTIMIZED"),
-  .CLK_FEEDBACK           ("CLKFBOUT"),
-  .COMPENSATION           ("SYSTEM_SYNCHRONOUS"),
-  .DIVCLK_DIVIDE          (2),
-  .CLKFBOUT_MULT          (15),
-  .CLKFBOUT_PHASE         (0.000),
-  .CLKOUT0_DIVIDE         (6),
-  .CLKOUT0_PHASE          (0.000),
-  .CLKOUT0_DUTY_CYCLE     (0.500),
-  .CLKIN_PERIOD           (10.0),
-  .REF_JITTER             (0.010))
-pll_base_inst (
-  .CLKFBOUT              (pll_clk_bufout),
-  .CLKOUT0               (pll_clk),
-  .LOCKED                (pll_locked),
-  .RST                   (RST),
-  .CLKFBIN               (pll_clk_bufin),
-  .CLKIN                 (CLK_100M)
+// Timing
+wire CLK_125M;
+
+ether_timing ether_timing (
+  .rst       (RST),
+  .clk_100   (CLK_100M),
+  .phy_rst   (ETH_RST),
+  .phy_clk   (ETH_CLK),
+  .clk_125   (CLK_125M)
 );
 
-BUFG clkfbin_bufg (
-  .I(pll_clk_bufout),
-  .O(pll_clk_bufin)
-);
-
-BUFG clkout0_bufg (
-  .I(pll_clk),
-  .O(CLK_125M)
-);
-
-// Ethernet
-reg [7:0] cnt = 8'b0;
-
-always @(posedge RST or posedge CLK_125M) begin
-  if (RST) begin
-    cnt <= 8'b0;
-    LED <= 8'b0;
-  end
-  else begin
-    cnt      <= (cnt == 8'b11111111) ? 8'b0 : cnt + 8'b1;
-    LED[6:0] <= ETH_RX_DATA[6:0];
-    LED[7]   <= cnt[7];
-  end
-end
-
+// TX
 ether_sample_packet_tx sample_tx (
   .trig     (BTN),
   .rst      (RST),
@@ -90,6 +57,16 @@ ether_sample_packet_tx sample_tx (
   .phy_er   (ETH_TX_ER),
   .phy_en   (ETH_TX_EN),
   .phy_data (ETH_TX_DATA)
+);
+
+// RX
+ether_debug_packet_rx debug_rx (
+  .rst         (RST),
+  .clk_100     (CLK_100M),
+  .clk_125     (CLK_125M),
+  .phy_rx_clk  (ETH_RX_CLK),
+  .phy_rx_data (ETH_RX_DATA),
+  .out         (LED)
 );
 
 endmodule
