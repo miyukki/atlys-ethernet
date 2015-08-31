@@ -27,7 +27,7 @@ module main #(
   input  wire [7:0] ETH_RX_DATA,
 
   // Debug
-  /*input  wire       SW,*/
+  input  wire [7:0] SW,
   output wire [7:0] LED
 );
 
@@ -60,13 +60,25 @@ ether_sample_packet_tx sample_tx (
 );
 
 // RX
-ether_debug_packet_rx debug_rx (
+ether_sample_packet_rx sample_rx (
   .rst         (RST),
   .clk_100     (CLK_100M),
   .clk_125     (CLK_125M),
   .phy_rx_clk  (ETH_RX_CLK),
+  .phy_rx_dv   (ETH_RX_DV),
   .phy_rx_data (ETH_RX_DATA),
+  .address     (SW),
   .out         (LED)
 );
+/*ether_debug_packet_rx debug_rx (
+  .rst         (RST),
+  .clk_100     (CLK_100M),
+  .clk_125     (CLK_125M),
+  .phy_rx_clk  (ETH_RX_CLK),
+  .phy_rx_dv   (ETH_RX_DV),
+  .phy_rx_data (ETH_RX_DATA),
+  .address     (SW),
+  .out         (LED)
+);*/
 
 endmodule
